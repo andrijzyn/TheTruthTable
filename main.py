@@ -85,7 +85,7 @@ def display_truth_table(variable_names, truth_table, functions):
     print(tabulate(truth_table, headers=headers, tablefmt="grid"))
 
 
-def main():
+if __name__ == "__main__":
     while True:
         print("\nEnter logical functions (one per line). Enter an empty line to finish:")
         print("Example format: g1(x,y) = (x ∨ y̅) ∧ (x ∨ y)")
@@ -123,7 +123,3 @@ def main():
         cont = input("\nDo you want to enter more functions? (y/n): ")
         if cont.lower() != 'y':
             break
-
-
-if __name__ == "__main__":
-    main()
