@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from itertools import product
 from tabulate import tabulate
 
@@ -16,23 +18,16 @@ def parse_input(input_text):
 def preprocess_expression(expression):
     """Preprocesses the expression to replace logical operators with Python equivalents."""
     expression = expression.replace("∧", "and").replace("∨", "or").replace("¬", "not ")
-    expression = expression.replace("̅", "")  # Removes overline and prepares for proper NOT handling.
 
-    # Convert `y̅` to `not y`
-    result = ""
-    skip_next = False
-    for i, char in enumerate(expression):
-        if skip_next:
-            skip_next = False
-            continue
+    # Normalize combining characters like overline
+    expression = unicodedata.normalize('NFC', expression)
 
-        if i < len(expression) - 1 and expression[i + 1] == "̅":  # Check if char is followed by `̅`.
-            result += f"not {char}"
-            skip_next = True
-        else:
-            result += char
+    # Replace logical negation (x̅ -> not x)
+    expression = re.sub(r'([a-zA-Z])̅', r'not \1', expression)  # x̅ -> not x
+    expression = re.sub(r'0̅', '1', expression)  # 0̅ -> 1
+    expression = re.sub(r'1̅', '0', expression)  # 1̅ -> 0
 
-    return result
+    return expression
 
 
 def evaluate_expression(expression, variables):
@@ -48,8 +43,11 @@ def evaluate_expression(expression, variables):
     expression = preprocess_expression(expression)
     steps.append(f"Preprocessed expression: {expression}")
 
-    # Evaluate the expression
-    result = int(eval(expression))
+    try:
+        result = int(eval(expression))  # Evaluate the expression
+    except Exception as e:
+        result = None
+        steps.append(f"Error: {e}")
     steps.append(f"Final result: {result}")
     return result, " -> ".join(steps)
 
@@ -86,6 +84,7 @@ def display_truth_table(variable_names, truth_table, functions):
 
 
 if __name__ == "__main__":
+    print("Just a heads-up: \nDon't forget to check your input for spaces between operators and numbers.\nJust double-click the Enter key to enter your data.")
     while True:
         print("\nEnter logical functions (one per line). Enter an empty line to finish:")
         print("Example format: g1(x,y) = (x ∨ y̅) ∧ (x ∨ y)")
