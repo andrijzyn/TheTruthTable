@@ -17,15 +17,19 @@ def parse_input(input_text):
 
 def preprocess_expression(expression):
     """Preprocesses the expression to replace logical operators with Python equivalents."""
-    expression = expression.replace("∧", "and").replace("∨", "or").replace("¬", "not ")
+    expression = expression.replace("∧", " and ").replace("∨", " or ").replace("¬", " not ")
 
     # Normalize combining characters like overline
     expression = unicodedata.normalize('NFC', expression)
 
     # Replace logical negation (x̅ -> not x)
-    expression = re.sub(r'([a-zA-Z])̅', r'not \1', expression)  # x̅ -> not x
-    expression = re.sub(r'0̅', '1', expression)  # 0̅ -> 1
-    expression = re.sub(r'1̅', '0', expression)  # 1̅ -> 0
+    expression = re.sub(r'([a-zA-Z])̅', r'not \1', expression)
+
+    # Handle double negations explicitly to simplify them
+    expression = re.sub(r'not\s+not\s+', '', expression)
+
+    # Replace constants
+    expression = expression.replace('0̅', '1').replace('1̅', '0')
 
     return expression
 
@@ -49,7 +53,7 @@ def evaluate_expression(expression, variables):
         result = None
         steps.append(f"Error: {e}")
     steps.append(f"Final result: {result}")
-    return result, " -> ".join(steps)
+    return result, "\n".join(steps)
 
 
 def generate_truth_table(functions, variables):
@@ -75,19 +79,21 @@ def generate_truth_table(functions, variables):
 
 def display_truth_table(variable_names, truth_table, functions):
     """Displays truth table using tabulate with detailed steps."""
-    # Create headers for the table
-    headers = variable_names + [name for name, _ in functions] + [
-        f"Steps for {name}" for name, _ in functions
-    ]
-    print("\nTruth Table with Detailed Steps:")
-    print(tabulate(truth_table, headers=headers, tablefmt="grid"))
+    headers = variable_names + [f"{name}" for name, _ in functions]
+
+    table = []
+    for row in truth_table:
+        table.append([str(value) for value in row])
+
+    print("\nTruth Table:")
+    print(tabulate(table, headers=headers, tablefmt="grid"))
 
 
 if __name__ == "__main__":
     print("Just a heads-up: \nDon't forget to check your input for spaces between operators and numbers.\nJust double-click the Enter key to enter your data.")
     while True:
         print("\nEnter logical functions (one per line). Enter an empty line to finish:")
-        print("Example format: g1(x,y) = (x ∨ y̅) ∧ (x ∨ y)")
+        print("\nExample format: g1(x,y) = (x ∨ y̅) ∧ (x ∨ y):")
 
         input_lines = []
         while True:
