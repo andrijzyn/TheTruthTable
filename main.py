@@ -17,14 +17,21 @@ def parse_input(input_text):
 
 def preprocess_expression(expression):
     """Preprocesses the expression to replace logical operators with Python equivalents."""
-    expression = expression.replace("∧", " and ").replace("∨", " or ").replace("¬", " not ")
+    # Normalize and replace logical operators
     expression = unicodedata.normalize('NFC', expression)
+    expression = expression.replace("∧", " and ").replace("∨", " or ").replace("¬", " not ")
+
+    # Handle overlined variables (e.g., x̅ -> not x)
     expression = re.sub(r'([a-zA-Z])̅', r'not \1', expression)
+
+    # Handle negation of entire brackets (e.g., \overline{(x ∧ y)} -> not (x and y))
+    expression = re.sub(r'̅\((.+?)\)', r'not (\1)', expression)
+
     return expression
 
 
 def replace_variables(expression, variables):
-    """Replaces variables in the expression with their values, accounting for overlined variables."""
+    """Replaces variables in the expression with their values."""
     for var, value in variables.items():
         # Replace overlined variables (e.g., x̅ -> not value)
         expression = re.sub(fr"{var}̅", f"not {value}", expression)
